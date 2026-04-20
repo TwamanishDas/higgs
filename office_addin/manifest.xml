@@ -6,21 +6,27 @@
   xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
   xsi:type="TaskPaneApp">
 
+  <!-- ── Required header fields (order is enforced by schema) ── -->
   <Id>a7f3c2d1-4e85-4b9a-bc12-9d8e5f6a0123</Id>
   <Version>1.0.0.0</Version>
   <ProviderName>Higgs</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Higgs"/>
-  <Description DefaultValue="Send your Excel selection to Higgs and chat on your desktop widget"/>
+  <Description DefaultValue="Send your Excel selection to Higgs and get AI analysis on your desktop widget"/>
+
+  <!-- IconUrl and SupportUrl are REQUIRED by the schema -->
+  <IconUrl DefaultValue="http://localhost:5050/addin/icon32.png"/>
+  <HighResolutionIconUrl DefaultValue="http://localhost:5050/addin/icon80.png"/>
+  <SupportUrl DefaultValue="https://github.com/TwamanishDas/higgs"/>
+
+  <!-- AppDomains must appear BEFORE Hosts -->
+  <AppDomains>
+    <AppDomain>http://localhost:5050</AppDomain>
+  </AppDomains>
 
   <Hosts>
     <Host Name="Workbook"/>
   </Hosts>
-
-  <!-- Allow localhost dialogs (needed for the "sent" confirmation toast) -->
-  <AppDomains>
-    <AppDomain>http://localhost:5050</AppDomain>
-  </AppDomains>
 
   <DefaultSettings>
     <SourceLocation DefaultValue="http://localhost:5050/addin/taskpane.html"/>
@@ -28,13 +34,14 @@
 
   <Permissions>ReadWriteDocument</Permissions>
 
+  <!-- ── Version overrides: ribbon buttons + function file ── -->
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
                     xsi:type="VersionOverridesV1_0">
     <Hosts>
       <Host xsi:type="Workbook">
         <DesktopFormFactor>
 
-          <!-- Function file — runs JS without showing a task pane -->
+          <!-- Function file hosts the JS that runs when buttons are clicked -->
           <FunctionFile resid="Commands.Url"/>
 
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
@@ -42,7 +49,7 @@
               <Group id="HiggsGroup">
                 <Label resid="GroupLabel"/>
 
-                <!-- Button 1: Send selection to Higgs -->
+                <!-- Button 1: Send selected range to Higgs -->
                 <Control xsi:type="Button" id="SendSelectionBtn">
                   <Label resid="SendBtnLabel"/>
                   <Supertip>
@@ -59,7 +66,7 @@
                   </Action>
                 </Control>
 
-                <!-- Button 2: Send full sheet summary -->
+                <!-- Button 2: Send full sheet summary to Higgs -->
                 <Control xsi:type="Button" id="SendSheetBtn">
                   <Label resid="SheetBtnLabel"/>
                   <Supertip>
@@ -86,19 +93,19 @@
 
     <Resources>
       <bt:Urls>
-        <bt:Url id="Commands.Url"  DefaultValue="http://localhost:5050/addin/commands.html"/>
-        <bt:Url id="Taskpane.Url"  DefaultValue="http://localhost:5050/addin/taskpane.html"/>
+        <bt:Url id="Commands.Url" DefaultValue="http://localhost:5050/addin/commands.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="http://localhost:5050/addin/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel"    DefaultValue="Higgs AI"/>
         <bt:String id="SendBtnLabel"  DefaultValue="Ask Higgs"/>
         <bt:String id="SendBtnTitle"  DefaultValue="Send Selection to Higgs"/>
         <bt:String id="SheetBtnLabel" DefaultValue="Sheet Summary"/>
-        <bt:String id="SheetBtnTitle" DefaultValue="Send Sheet Summary to Higgs"/>
+        <bt:String id="SheetBtnTitle" DefaultValue="Send Sheet to Higgs"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="SendBtnDesc"  DefaultValue="Sends your selected cells to the Higgs widget. Chat directly on your desktop — no task pane needed."/>
-        <bt:String id="SheetBtnDesc" DefaultValue="Sends a summary of the active sheet (headers + stats) to Higgs for analysis."/>
+        <bt:String id="SendBtnDesc"  DefaultValue="Sends your selected cells to the Higgs desktop widget for AI analysis. No task pane — everything happens on your desktop."/>
+        <bt:String id="SheetBtnDesc" DefaultValue="Sends the active sheet headers and a data sample to Higgs for analysis and insights."/>
       </bt:LongStrings>
       <bt:Images>
         <bt:Image id="Icon16" DefaultValue="http://localhost:5050/addin/icon16.png"/>
@@ -106,6 +113,6 @@
         <bt:Image id="Icon80" DefaultValue="http://localhost:5050/addin/icon80.png"/>
       </bt:Images>
     </Resources>
-  </VersionOverrides>
 
+  </VersionOverrides>
 </OfficeApp>
