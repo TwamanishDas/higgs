@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="TaskPaneApp">
+
+  <Id>a7f3c2d1-4e85-4b9a-bc12-9d8e5f6a0123</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Desktop Companion</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Aria"/>
+  <Description DefaultValue="Send your Excel selection to Aria and chat on your desktop widget"/>
+
+  <Hosts>
+    <Host Name="Workbook"/>
+  </Hosts>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="http://localhost:5050/addin/taskpane.html"/>
+  </DefaultSettings>
+
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+                    xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Workbook">
+        <DesktopFormFactor>
+
+          <!-- Function file — runs JS without showing a task pane -->
+          <FunctionFile resid="Commands.Url"/>
+
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="AriaGroup">
+                <Label resid="GroupLabel"/>
+
+                <!-- Button 1: Send selection to Aria -->
+                <Control xsi:type="Button" id="SendSelectionBtn">
+                  <Label resid="SendBtnLabel"/>
+                  <Supertip>
+                    <Title resid="SendBtnTitle"/>
+                    <Description resid="SendBtnDesc"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon16"/>
+                    <bt:Image size="32" resid="Icon32"/>
+                    <bt:Image size="80" resid="Icon80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>sendSelectionToAria</FunctionName>
+                  </Action>
+                </Control>
+
+                <!-- Button 2: Send full sheet summary -->
+                <Control xsi:type="Button" id="SendSheetBtn">
+                  <Label resid="SheetBtnLabel"/>
+                  <Supertip>
+                    <Title resid="SheetBtnTitle"/>
+                    <Description resid="SheetBtnDesc"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon16"/>
+                    <bt:Image size="32" resid="Icon32"/>
+                    <bt:Image size="80" resid="Icon80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>sendSheetSummaryToAria</FunctionName>
+                  </Action>
+                </Control>
+
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Urls>
+        <bt:Url id="Commands.Url"  DefaultValue="http://localhost:5050/addin/commands.html"/>
+        <bt:Url id="Taskpane.Url"  DefaultValue="http://localhost:5050/addin/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GroupLabel"    DefaultValue="Aria AI"/>
+        <bt:String id="SendBtnLabel"  DefaultValue="Ask Aria"/>
+        <bt:String id="SendBtnTitle"  DefaultValue="Send Selection to Aria"/>
+        <bt:String id="SheetBtnLabel" DefaultValue="Sheet Summary"/>
+        <bt:String id="SheetBtnTitle" DefaultValue="Send Sheet Summary to Aria"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="SendBtnDesc"  DefaultValue="Sends your selected cells to the Aria widget. Chat directly on your desktop — no task pane needed."/>
+        <bt:String id="SheetBtnDesc" DefaultValue="Sends a summary of the active sheet (headers + stats) to Aria for analysis."/>
+      </bt:LongStrings>
+      <bt:Images>
+        <bt:Image id="Icon16" DefaultValue="http://localhost:5050/addin/icon16.png"/>
+        <bt:Image id="Icon32" DefaultValue="http://localhost:5050/addin/icon32.png"/>
+        <bt:Image id="Icon80" DefaultValue="http://localhost:5050/addin/icon80.png"/>
+      </bt:Images>
+    </Resources>
+  </VersionOverrides>
+
+</OfficeApp>

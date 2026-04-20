@@ -1,0 +1,44 @@
+# ── Secrets & local config ────────────────────────────────────────────────────
+config.json          # contains Azure API key — never commit this
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.spec
+
+# ── Memory & DB (auto-generated at runtime) ───────────────────────────────────
+memory/companion.db
+memory/soul.md
+memory/procedures.md
+memory/salience.md
+memory/memory.md
+memory/soul_meta.json
+# Keep identity.md out too — regenerated on first run
+memory/identity.md
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Pokémon sprites cache ─────────────────────────────────────────────────────
+sprites/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+desktop.ini

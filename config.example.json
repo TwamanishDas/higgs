@@ -1,0 +1,55 @@
+{
+  "azure": {
+    "endpoint": "https://YOUR-RESOURCE.openai.azure.com/",
+    "api_key": "YOUR_AZURE_OPENAI_API_KEY",
+    "model": "gpt-4o",
+    "deployment": "gpt-4o",
+    "api_version": "2024-12-01-preview"
+  },
+  "widget": {
+    "start_x": 1200,
+    "start_y": 100,
+    "size": 110,
+    "opacity": 0.95
+  },
+  "character": {
+    "type": "orb",
+    "pokemon_id": 25,
+    "shiny": false
+  },
+  "identity": {
+    "name": "Higgs",
+    "tagline": "Your ambient second brain",
+    "accent_color": "#4a9eff"
+  },
+  "soul": {
+    "personality": "professional",
+    "custom_instructions": "",
+    "auto_evolve": true
+  },
+  "skills": {
+    "system_monitor": true,
+    "window_tracker": true,
+    "calendar": true,
+    "obsidian_notes": true,
+    "ai_brain": true,
+    "context_help": true,
+    "memory": true
+  },
+  "awareness": {
+    "scan_interval_seconds": 30,
+    "track_windows": true,
+    "track_system": true,
+    "track_processes": true,
+    "max_processes": 10
+  },
+  "vault": {
+    "path": "C:\\Users\\YourName\\Documents\\ObsidianVault",
+    "max_context_files": 8
+  },
+  "notifications": {
+    "scan_cooldown_seconds": 300,
+    "reminder_cooldown_seconds": 3600,
+    "display_duration_seconds": 8
+  }
+}

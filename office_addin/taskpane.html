@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Aria</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      gap: 12px;
+    }
+    .logo { font-size: 28px; color: #4a9eff; font-weight: bold; letter-spacing: 2px; }
+    .sub  { font-size: 12px; color: #8b949e; text-align: center; max-width: 200px; line-height: 1.5; }
+    .dot  {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #3fb950; animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">◆ Aria</div>
+  <div class="dot"></div>
+  <div class="sub">Connected to your desktop widget.<br/>Use the ribbon buttons to send Excel data.</div>
+</body>
+</html>
