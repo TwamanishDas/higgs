@@ -8,14 +8,19 @@
 
   <Id>a7f3c2d1-4e85-4b9a-bc12-9d8e5f6a0123</Id>
   <Version>1.0.0.0</Version>
-  <ProviderName>Desktop Companion</ProviderName>
+  <ProviderName>Higgs</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Aria"/>
-  <Description DefaultValue="Send your Excel selection to Aria and chat on your desktop widget"/>
+  <DisplayName DefaultValue="Higgs"/>
+  <Description DefaultValue="Send your Excel selection to Higgs and chat on your desktop widget"/>
 
   <Hosts>
     <Host Name="Workbook"/>
   </Hosts>
+
+  <!-- Allow localhost dialogs (needed for the "sent" confirmation toast) -->
+  <AppDomains>
+    <AppDomain>http://localhost:5050</AppDomain>
+  </AppDomains>
 
   <DefaultSettings>
     <SourceLocation DefaultValue="http://localhost:5050/addin/taskpane.html"/>
@@ -34,10 +39,10 @@
 
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <OfficeTab id="TabHome">
-              <Group id="AriaGroup">
+              <Group id="HiggsGroup">
                 <Label resid="GroupLabel"/>
 
-                <!-- Button 1: Send selection to Aria -->
+                <!-- Button 1: Send selection to Higgs -->
                 <Control xsi:type="Button" id="SendSelectionBtn">
                   <Label resid="SendBtnLabel"/>
                   <Supertip>
@@ -85,15 +90,15 @@
         <bt:Url id="Taskpane.Url"  DefaultValue="http://localhost:5050/addin/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GroupLabel"    DefaultValue="Aria AI"/>
-        <bt:String id="SendBtnLabel"  DefaultValue="Ask Aria"/>
-        <bt:String id="SendBtnTitle"  DefaultValue="Send Selection to Aria"/>
+        <bt:String id="GroupLabel"    DefaultValue="Higgs AI"/>
+        <bt:String id="SendBtnLabel"  DefaultValue="Ask Higgs"/>
+        <bt:String id="SendBtnTitle"  DefaultValue="Send Selection to Higgs"/>
         <bt:String id="SheetBtnLabel" DefaultValue="Sheet Summary"/>
-        <bt:String id="SheetBtnTitle" DefaultValue="Send Sheet Summary to Aria"/>
+        <bt:String id="SheetBtnTitle" DefaultValue="Send Sheet Summary to Higgs"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="SendBtnDesc"  DefaultValue="Sends your selected cells to the Aria widget. Chat directly on your desktop — no task pane needed."/>
-        <bt:String id="SheetBtnDesc" DefaultValue="Sends a summary of the active sheet (headers + stats) to Aria for analysis."/>
+        <bt:String id="SendBtnDesc"  DefaultValue="Sends your selected cells to the Higgs widget. Chat directly on your desktop — no task pane needed."/>
+        <bt:String id="SheetBtnDesc" DefaultValue="Sends a summary of the active sheet (headers + stats) to Higgs for analysis."/>
       </bt:LongStrings>
       <bt:Images>
         <bt:Image id="Icon16" DefaultValue="http://localhost:5050/addin/icon16.png"/>

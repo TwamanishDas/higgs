@@ -1,4 +1,4 @@
-/* Aria Excel Add-in — command functions.
+/* Higgs Excel Add-in — command functions.
    Runs silently (no task pane). Reads Excel data and POSTs to the local Python backend.
    All user interaction happens on the desktop widget, not here.
 */
