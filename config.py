@@ -40,7 +40,9 @@ _DEFAULTS = {
         "obsidian_notes": True,
         "ai_brain":       True,
         "context_help":   True,
-        "memory":         True
+        "memory":         True,
+        "office_reader":  True,   # COM: reads Excel/Word/PPT content automatically
+        "browser_reader": False   # CDP: reads browser tab (needs --remote-debugging-port=9222)
     },
     "awareness": {
         "scan_interval_seconds": 30,
@@ -59,6 +61,12 @@ _DEFAULTS = {
         "scan_cooldown_seconds": 300,
         "reminder_cooldown_seconds": 3600,
         "display_duration_seconds": 8
+    },
+    "tone": {
+        "style":        "default",
+        "blend_style":  "",
+        "blend_weight": 30,
+        "temperature":  70
     }
 }
 

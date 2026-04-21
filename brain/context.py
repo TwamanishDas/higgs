@@ -30,6 +30,28 @@ def build_context(cfg: dict) -> str:
         parts.append(f"## Recent Window History\n{json.dumps(history, indent=2)}")
         parts.append(f"## Open Windows (sample)\n{json.dumps(open_wins[:10], indent=2)}")
 
+        # ── Office document content (COM automation — no add-in required) ──────
+        if cfg.get("skills", {}).get("office_reader", True):
+            try:
+                from awareness import office_reader
+                office_data = office_reader.read_active_office(active.get("process", ""))
+                if office_data:
+                    parts.append(f"## Active Document Content\n{json.dumps(office_data, indent=2)}")
+                    log.info(f"Office content injected | app={office_data.get('app')}")
+            except Exception as _oe:
+                log.debug(f"office_reader skipped: {_oe}")
+
+        # ── Browser tab content (CDP — requires --remote-debugging-port=9222) ──
+        if cfg.get("skills", {}).get("browser_reader", False):
+            try:
+                from awareness import browser_reader
+                browser_data = browser_reader.read_browser()
+                if browser_data:
+                    parts.append(f"## Active Browser Tab\n{json.dumps(browser_data, indent=2)}")
+                    log.info(f"Browser content injected | {browser_data.get('url', '')[:60]}")
+            except Exception as _be:
+                log.debug(f"browser_reader skipped: {_be}")
+
     if cfg["awareness"]["track_processes"]:
         installed = app_awareness.get_installed_apps()
         log.info(f"Installed apps count: {len(installed)}")

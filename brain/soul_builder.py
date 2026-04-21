@@ -29,12 +29,13 @@ _MEM_DIR = os.path.join(
     "memory"
 )
 
-_SOUL_FILE       = os.path.join(_MEM_DIR, "soul.md")
-_IDENTITY_FILE   = os.path.join(_MEM_DIR, "identity.md")
-_MEMORY_FILE     = os.path.join(_MEM_DIR, "memory.md")
-_PROCEDURES_FILE = os.path.join(_MEM_DIR, "procedures.md")
-_SALIENCE_FILE   = os.path.join(_MEM_DIR, "salience.md")
-_META_FILE       = os.path.join(_MEM_DIR, "soul_meta.json")
+_SOUL_FILE          = os.path.join(_MEM_DIR, "soul.md")
+_IDENTITY_FILE      = os.path.join(_MEM_DIR, "identity.md")
+_MEMORY_FILE        = os.path.join(_MEM_DIR, "memory.md")
+_PROCEDURES_FILE    = os.path.join(_MEM_DIR, "procedures.md")
+_SALIENCE_FILE      = os.path.join(_MEM_DIR, "salience.md")
+_META_FILE          = os.path.join(_MEM_DIR, "soul_meta.json")
+_PERSONAL_INFO_FILE = os.path.join(_MEM_DIR, "personal_info.md")
 
 # Token-budget per file when building the injected context block
 _MAX_SOUL_CHARS     = 800
@@ -115,6 +116,10 @@ def load_all() -> str:
         dated = [s.strip() for s in sections if re.match(r'^## \d{4}', s.strip())]
         if dated:
             parts.append("[MEMORY LOG]\n" + "\n\n".join(dated[-3:]))
+
+    personal = _read(_PERSONAL_INFO_FILE)
+    if personal:
+        parts.insert(0, f"[PERSONAL INFO]\n{personal}")
 
     if not parts:
         return ""
@@ -400,6 +405,45 @@ def reset():
     meta.pop("last_evolved", None)
     _write_meta(meta)
     log.info(f"Soul reset | {removed} files removed — will re-seed on next startup")
+
+
+def get_personal_info() -> str:
+    """Return the current personal info content."""
+    return _read(_PERSONAL_INFO_FILE)
+
+
+def save_personal_info(content: str):
+    """Write personal info to personal_info.md."""
+    _write(_PERSONAL_INFO_FILE, content)
+    log.info(f"Personal info saved | {len(content.split())} words")
+
+
+def get_evolution_timeline() -> list:
+    """Return dated memory entries for the evolution timeline, most recent first."""
+    memory_raw = _read(_MEMORY_FILE)
+    if not memory_raw:
+        return []
+    meta = _read_meta()
+    seed_date = (meta.get("seed_date") or "")[:10]
+    last_evolved = meta.get("last_evolved", "")
+
+    sections = re.split(r'(?=^## \d{4}-\d{2}-\d{2})', memory_raw, flags=re.MULTILINE)
+    entries = []
+    for s in sections:
+        m = re.match(r'^## (\d{4}-\d{2}-\d{2})', s.strip())
+        if not m:
+            continue
+        date = m.group(1)
+        content = s.strip()[len(f"## {date}"):].strip()
+        preview = content[:220] + ("…" if len(content) > 220 else "")
+        if date == seed_date:
+            label = "Seeded"
+        elif date == last_evolved:
+            label = "Last Evolution"
+        else:
+            label = "Daily Log"
+        entries.append({"date": date, "label": label, "preview": preview})
+    return list(reversed(entries))
 
 
 def get_soul_summary() -> dict:

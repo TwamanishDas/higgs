@@ -17,6 +17,7 @@ _deployment:  str  = ""
 _api_version: str  = "2024-12-01-preview"
 _identity:    dict = {}
 _soul:        dict = {}
+_tone:        dict = {}
 _auto_trait:  str  = ""
 
 # ── Assistance category rotation ─────────────────────────────────────────────
@@ -72,7 +73,7 @@ def _next_category() -> tuple[str, str, str]:
     return cat   # (key, name, instruction)
 
 
-# ── Personality styles ────────────────────────────────────────────────────────
+# ── Tone / character styles ───────────────────────────────────────────────────
 
 _PERSONALITY_STYLES = {
     "professional": "Precise, concise, data-driven. Cite real numbers. No fluff.",
@@ -81,6 +82,42 @@ _PERSONALITY_STYLES = {
     "calm":         "Zen, minimal. Short peaceful observations. Never alarmist.",
     "witty":        "Sharp and clever. Add dry wit where fitting. Keep it smart.",
 }
+
+_TONE_STYLES = {
+    "default":      "Neutral, clear, and balanced. Helpful without being over-the-top.",
+    "friendly":     "Warm, chatty, and conversational. Use light wit, ask clarifying questions when genuinely helpful.",
+    "professional": "Polished and precise. Use formal language and business-writing conventions. No filler.",
+    "candid":       "Direct and honest. Lead with the core issue. Call out risks plainly. Actionable guidance only — no small talk.",
+    "quirky":       "Playful and imaginative. Use humor, offbeat observations, and creative metaphors to explain concepts.",
+    "efficient":    "Concise and plain. Deliver the answer immediately in as few words as possible. No preamble, no filler.",
+    "nerdy":        "Enthusiastic and exploratory. Deep-dive into detail, explain the why, reference relevant concepts with genuine curiosity.",
+    "cynical":      "Sarcastic and dry. Blunt, irreverent help with wit. Sound a bit skeptical or critical — but still actually useful.",
+}
+
+
+def _build_style_description() -> str:
+    """Compose the tone/style instruction injected into every system prompt."""
+    style  = _tone.get("style", "") or _soul.get("personality", "default")
+    blend  = _tone.get("blend_style", "")
+    weight = int(_tone.get("blend_weight", 0))   # 0-100
+
+    primary_desc = _TONE_STYLES.get(style, _TONE_STYLES["default"])
+
+    if blend and blend != style and 0 < weight <= 100:
+        secondary_desc = _TONE_STYLES.get(blend, "")
+        if secondary_desc:
+            p = 100 - weight
+            return (
+                f"Primary tone ({p}%): {primary_desc} "
+                f"Blend ({weight}%): {secondary_desc}"
+            )
+
+    return primary_desc
+
+
+def _get_temperature() -> float:
+    """Return API temperature from tone config (stored as 0-100 int)."""
+    return max(0.0, min(1.0, int(_tone.get("temperature", 70)) / 100.0))
 
 # ── Response schema ───────────────────────────────────────────────────────────
 
@@ -109,28 +146,35 @@ def set_auto_trait(trait: str):
     _auto_trait = trait
 
 
+def update_tone(tone_cfg: dict):
+    """Hot-reload tone config without restarting — called after settings save."""
+    global _tone
+    _tone = tone_cfg or {}
+    log.info(f"Tone updated | style={_tone.get('style')} | temp={_tone.get('temperature')} | blend={_tone.get('blend_style')}")
+
+
 def init(endpoint: str, api_key: str, deployment: str,
          api_version: str = "2024-12-01-preview",
-         identity: dict = None, soul: dict = None):
-    global _endpoint, _api_key, _deployment, _api_version, _identity, _soul
+         identity: dict = None, soul: dict = None, tone: dict = None):
+    global _endpoint, _api_key, _deployment, _api_version, _identity, _soul, _tone
     _endpoint    = endpoint.rstrip("/")
     _api_key     = api_key
     _deployment  = deployment
     _api_version = api_version
     _identity    = identity or {}
     _soul        = soul or {}
+    _tone        = tone or {}
     name        = _identity.get("name", "Aria")
     personality = _soul.get("personality", "professional")
-    log.info(f"Azure client init | name={name} | personality={personality} | deployment={_deployment}")
+    log.info(f"Azure client init | name={name} | personality={personality} | tone={_tone.get('style','default')} | deployment={_deployment}")
 
 
 def _build_system_prompt(category_name: str, category_instruction: str,
                          past_recs: list[dict]) -> str:
-    name       = _identity.get("name", "Aria")
-    tagline    = _identity.get("tagline", "Your ambient second brain")
-    personality = _soul.get("personality", "professional")
-    custom     = _soul.get("custom_instructions", "").strip()
-    style      = _PERSONALITY_STYLES.get(personality, _PERSONALITY_STYLES["professional"])
+    name    = _identity.get("name", "Aria")
+    tagline = _identity.get("tagline", "Your ambient second brain")
+    custom  = _soul.get("custom_instructions", "").strip()
+    style   = _build_style_description()
 
     # ── Soul context block (OpenClaw read-into-being) ─────────────────────────
     try:
@@ -203,7 +247,7 @@ def analyze(context: str) -> dict:
             {"role": "system", "content": system_prompt},
             {"role": "user",   "content": context},
         ],
-        "temperature":     0.75,   # higher → more varied recommendations
+        "temperature":     _get_temperature(),
         "max_tokens":      600,
         "response_format": {"type": "json_object"},
     }
@@ -266,8 +310,7 @@ def chat(user_message: str, excel_context: dict | None = None) -> str:
 
     name    = _identity.get("name", "Aria")
     tagline = _identity.get("tagline", "Your ambient second brain")
-    personality = _soul.get("personality", "professional")
-    style   = _PERSONALITY_STYLES.get(personality, _PERSONALITY_STYLES["professional"])
+    style   = _build_style_description()
     custom  = _soul.get("custom_instructions", "").strip()
 
     # Build Excel context block
@@ -344,7 +387,7 @@ def chat(user_message: str, excel_context: dict | None = None) -> str:
             {"role": "system",  "content": system},
             {"role": "user",    "content": user_message},
         ],
-        "temperature": 0.6,
+        "temperature": max(0.0, _get_temperature() - 0.1),  # chat slightly tighter than scan
         "max_tokens":  400,
     }
 

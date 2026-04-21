@@ -170,6 +170,8 @@ class SettingsPanel(QWidget):
             ("🔗", "Azure AI"),
             ("📁", "Vault"),
             ("🔔", "Notifications"),
+            ("📋", "Personal"),
+            ("🎭", "Tone"),
         ]
         for i, (icon, label) in enumerate(nav_items):
             btn = SidebarButton(icon, label)
@@ -218,6 +220,8 @@ class SettingsPanel(QWidget):
         self._stack.addWidget(self._page_azure())
         self._stack.addWidget(self._page_vault())
         self._stack.addWidget(self._page_notifications())
+        self._stack.addWidget(self._page_personal())
+        self._stack.addWidget(self._page_tone())
         right.addWidget(self._stack)
 
         # Bottom bar
@@ -389,6 +393,26 @@ class SettingsPanel(QWidget):
         btn_row.addStretch()
         lay.addLayout(btn_row)
 
+        # ── Evolution Timeline ────────────────────────────────────────────────
+        lay.addWidget(_section("Evolution Timeline"))
+        lay.addWidget(_hint(
+            "A dated log of how the soul has evolved. Each entry shows what was "
+            "observed and learned on that day."
+        ))
+
+        self._timeline_view = QTextEdit()
+        self._timeline_view.setReadOnly(True)
+        self._timeline_view.setPlaceholderText("No evolution history yet.")
+        self._timeline_view.setFixedHeight(140)
+        self._timeline_view.setStyleSheet(f"""
+            QTextEdit {{
+                background: {_RAISED}; color: {_MUTED};
+                border: 1px solid {_BORDER}; border-radius: 6px;
+                padding: 8px; font-size: 10px; font-family: Consolas, monospace;
+            }}
+        """)
+        lay.addWidget(self._timeline_view)
+
         lay.addStretch()
 
         # Populate soul viewer on next event loop tick (avoids import-time errors)
@@ -413,6 +437,19 @@ class SettingsPanel(QWidget):
                     self._soul_view.setPlainText("(soul.md is empty)")
             else:
                 self._soul_status_lbl.setText("Soul not seeded yet — start the widget to initialise.")
+
+            if hasattr(self, "_timeline_view"):
+                entries = soul_builder.get_evolution_timeline()
+                if entries:
+                    lines = []
+                    for e in entries:
+                        lines.append(f"[{e['date']}]  {e['label']}")
+                        if e["preview"]:
+                            lines.append(f"  {e['preview']}")
+                        lines.append("")
+                    self._timeline_view.setPlainText("\n".join(lines).strip())
+                else:
+                    self._timeline_view.setPlainText("No evolution history yet.")
         except Exception as e:
             self._soul_status_lbl.setText(f"Could not load soul: {e}")
 
@@ -566,6 +603,12 @@ class SettingsPanel(QWidget):
              "Detects what you're working on (PDF, code, language) and offers relevant assistance."),
             ("memory",         "🧬  Memory & Learning",
              "Stores daily activity, learns usage patterns, and auto-builds character traits over time."),
+            ("office_reader",  "📄  Office Reader",
+             "Reads content from open Excel, Word, and PowerPoint files via COM automation — "
+             "no add-ins needed. AI scans reference your actual data, not just the window title."),
+            ("browser_reader", "🌐  Browser Reader",
+             "Reads the active browser tab via Chrome DevTools Protocol. "
+             "Requires Chrome/Edge launched with --remote-debugging-port=9222 (see below)."),
         ]
 
         for key, label, desc in skill_defs:
@@ -590,6 +633,48 @@ class SettingsPanel(QWidget):
             row_lay.addWidget(cb)
             self._skill_checks[key] = cb
             lay.addWidget(row_frame)
+
+        # ── Browser Reader setup instructions ────────────────────────────────
+        lay.addWidget(_divider())
+        lay.addWidget(_section("Browser Reader Setup"))
+        lay.addWidget(_hint(
+            "To enable browser reading, launch Chrome or Edge with the remote debugging flag.\n"
+            "Copy one of the commands below, paste it into Run (Win+R) or a terminal, and press Enter.\n"
+            "You only need to do this once — Higgs detects the port automatically."
+        ))
+
+        chrome_cmd = (
+            r'"C:\Program Files\Google\Chrome\Application\chrome.exe" '
+            r'--remote-debugging-port=9222 --restore-last-session'
+        )
+        edge_cmd = (
+            r'"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" '
+            r'--remote-debugging-port=9222 --restore-last-session'
+        )
+
+        for browser_name, cmd in [("Chrome", chrome_cmd), ("Edge", edge_cmd)]:
+            cmd_frame = QFrame()
+            cmd_frame.setObjectName("card")
+            cmd_frame.setStyleSheet(
+                f"QFrame#card {{ background: {_RAISED}; border-radius: 8px; border: 1px solid {_BORDER}; }}"
+            )
+            cmd_lay = QVBoxLayout(cmd_frame)
+            cmd_lay.setContentsMargins(12, 8, 12, 8)
+            cmd_lay.setSpacing(4)
+
+            hdr = QLabel(f"{browser_name} launch command:")
+            hdr.setStyleSheet(f"color: {_MUTED}; font-size: 10px; font-weight: bold;")
+            cmd_lay.addWidget(hdr)
+
+            cmd_edit = QLineEdit(cmd)
+            cmd_edit.setReadOnly(True)
+            cmd_edit.setStyleSheet(
+                f"background: {_DARK}; color: {_GREEN}; "
+                f"font-family: Consolas, monospace; font-size: 9px; "
+                f"border: none; padding: 4px 6px;"
+            )
+            cmd_lay.addWidget(cmd_edit)
+            lay.addWidget(cmd_frame)
 
         lay.addStretch()
         return self._scroll_wrap(w)
@@ -675,6 +760,215 @@ class SettingsPanel(QWidget):
         lay.addStretch()
         return self._scroll_wrap(w)
 
+    def _page_personal(self) -> QWidget:
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setContentsMargins(24, 20, 24, 20)
+        lay.setSpacing(16)
+
+        lay.addWidget(_section("Personal Context"))
+        lay.addWidget(_hint(
+            "Tell the widget about yourself — your role, goals, preferences, or anything "
+            "you want it to always remember. This is injected into every AI prompt, "
+            "similar to Claude's or Gemini's memory feature."
+        ))
+        lay.addWidget(_divider())
+
+        self._personal_edit = QTextEdit()
+        self._personal_edit.setPlaceholderText(
+            "e.g. I am a software engineer at a fintech startup. I mostly work in Python "
+            "and Azure. I prefer concise, actionable advice. My current focus is shipping "
+            "the payments feature by end of quarter."
+        )
+        self._personal_edit.setMinimumHeight(220)
+        lay.addWidget(self._personal_edit)
+
+        btn_row = QHBoxLayout()
+        import_btn = QPushButton("📂  Import .md / .txt")
+        import_btn.setObjectName("ghost")
+        import_btn.clicked.connect(self._import_personal_info)
+        save_personal_btn = QPushButton("💾  Save")
+        save_personal_btn.clicked.connect(self._save_personal_info)
+        btn_row.addWidget(import_btn)
+        btn_row.addWidget(save_personal_btn)
+        btn_row.addStretch()
+        lay.addLayout(btn_row)
+
+        lay.addWidget(_hint(
+            "Stored in memory/personal_info.md. Takes effect on the next AI scan. "
+            "Import replaces the current content with the file you choose."
+        ))
+        lay.addStretch()
+
+        QTimer.singleShot(200, self._load_personal_info)
+        return self._scroll_wrap(w)
+
+    def _page_tone(self) -> QWidget:
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setContentsMargins(24, 20, 24, 20)
+        lay.setSpacing(16)
+
+        lay.addWidget(_section("Character Style"))
+        lay.addWidget(_hint(
+            "Choose how the AI speaks to you. Select a primary style, optionally blend "
+            "a second style, and adjust temperature to control creativity vs. focus."
+        ))
+        lay.addWidget(_divider())
+
+        tone_cfg = self._draft.get("tone", {})
+
+        # ── Tone cards (2-column grid) ────────────────────────────────────────
+        _TONE_DEFS = [
+            ("default",      "🤖", "Default",       "Neutral, clear, and balanced."),
+            ("friendly",     "😊", "Friendly",       "Warm, chatty, conversational, light wit."),
+            ("professional", "💼", "Professional",   "Polished, formal, precise. Business-ready."),
+            ("candid",       "🎯", "Candid",         "Direct, honest, no small talk. Risk-first."),
+            ("quirky",       "🎭", "Quirky",         "Playful, humorous, creative metaphors."),
+            ("efficient",    "⚡", "Efficient",      "Concise and plain. Immediate answers only."),
+            ("nerdy",        "🔬", "Nerdy",          "Deep-dive, curious, highly detailed."),
+            ("cynical",      "😒", "Cynical",        "Dry, sarcastic, blunt wit."),
+        ]
+
+        self._tone_cards: dict[str, QPushButton] = {}
+        current_style = tone_cfg.get("style", "default")
+
+        grid_widget = QWidget()
+        grid = QHBoxLayout()
+        grid.setSpacing(8)
+        col_left  = QVBoxLayout()
+        col_left.setSpacing(8)
+        col_right = QVBoxLayout()
+        col_right.setSpacing(8)
+
+        for i, (key, icon, name, desc) in enumerate(_TONE_DEFS):
+            card = QPushButton()
+            card.setCheckable(True)
+            card.setChecked(key == current_style)
+            card.setFixedHeight(60)
+            card.setProperty("tone_key", key)
+
+            card_inner = QVBoxLayout(card)
+            card_inner.setContentsMargins(10, 6, 10, 6)
+            card_inner.setSpacing(2)
+            title_lbl = QLabel(f"{icon}  {name}")
+            title_lbl.setStyleSheet(f"color: {_TEXT}; font-size: 12px; font-weight: bold; background: transparent;")
+            desc_lbl  = QLabel(desc)
+            desc_lbl.setStyleSheet(f"color: {_MUTED}; font-size: 10px; background: transparent;")
+            card_inner.addWidget(title_lbl)
+            card_inner.addWidget(desc_lbl)
+
+            self._tone_cards[key] = card
+            card.clicked.connect(lambda _, k=key: self._on_tone_selected(k))
+            self._apply_tone_card_style(card, key == current_style)
+
+            if i % 2 == 0:
+                col_left.addLayout(card_inner.parent().layout() if False else QVBoxLayout())
+                col_left.itemAt(col_left.count() - 1).layout().deleteLater()
+                col_left.addWidget(card)
+            else:
+                col_right.addWidget(card)
+
+        grid.addLayout(col_left)
+        grid.addLayout(col_right)
+        grid_widget.setLayout(grid)
+        lay.addWidget(grid_widget)
+
+        # ── Blend ─────────────────────────────────────────────────────────────
+        lay.addWidget(_section("Blend (Optional)"))
+        lay.addWidget(_hint("Mix a secondary style into the primary. 0% = pure primary, 50% = equal mix."))
+
+        blend_row = QHBoxLayout()
+        self._blend_combo = QComboBox()
+        self._blend_combo.addItem("None", "")
+        for key, icon, name, _ in _TONE_DEFS:
+            self._blend_combo.addItem(f"{icon}  {name}", key)
+        current_blend = tone_cfg.get("blend_style", "")
+        for i in range(self._blend_combo.count()):
+            if self._blend_combo.itemData(i) == current_blend:
+                self._blend_combo.setCurrentIndex(i)
+                break
+        blend_row.addWidget(self._blend_combo)
+
+        self._blend_weight_lbl = QLabel(f"{tone_cfg.get('blend_weight', 30)}%")
+        self._blend_weight_lbl.setFixedWidth(36)
+        self._blend_weight_lbl.setStyleSheet(f"color: {_ACCENT}; font-size: 12px; font-weight: bold;")
+        self._blend_slider = QSlider(Qt.Orientation.Horizontal)
+        self._blend_slider.setRange(0, 100)
+        self._blend_slider.setValue(tone_cfg.get("blend_weight", 30))
+        self._blend_slider.valueChanged.connect(
+            lambda v: self._blend_weight_lbl.setText(f"{v}%")
+        )
+        blend_row.addWidget(self._blend_slider)
+        blend_row.addWidget(self._blend_weight_lbl)
+        lay.addLayout(blend_row)
+
+        # ── Temperature ───────────────────────────────────────────────────────
+        lay.addWidget(_section("Temperature"))
+        lay.addWidget(_hint(
+            "Low = focused, consistent, predictable.  "
+            "High = creative, varied, more expressive."
+        ))
+
+        temp_row = QHBoxLayout()
+        focused_lbl = QLabel("Focused")
+        focused_lbl.setStyleSheet(f"color: {_MUTED}; font-size: 10px;")
+        creative_lbl = QLabel("Creative")
+        creative_lbl.setStyleSheet(f"color: {_MUTED}; font-size: 10px;")
+
+        self._temp_val_lbl = QLabel(f"{tone_cfg.get('temperature', 70)}")
+        self._temp_val_lbl.setFixedWidth(30)
+        self._temp_val_lbl.setStyleSheet(f"color: {_ACCENT}; font-size: 12px; font-weight: bold;")
+        self._temp_slider = QSlider(Qt.Orientation.Horizontal)
+        self._temp_slider.setRange(0, 100)
+        self._temp_slider.setValue(tone_cfg.get("temperature", 70))
+        self._temp_slider.valueChanged.connect(
+            lambda v: self._temp_val_lbl.setText(str(v))
+        )
+
+        temp_row.addWidget(focused_lbl)
+        temp_row.addWidget(self._temp_slider)
+        temp_row.addWidget(creative_lbl)
+        temp_row.addWidget(self._temp_val_lbl)
+        lay.addLayout(temp_row)
+
+        # Preset hints below slider
+        preset_row = QHBoxLayout()
+        for label, val in [("Deterministic", 10), ("Balanced", 50), ("Default", 70), ("Creative", 85), ("Wild", 95)]:
+            btn = QPushButton(f"{label} ({val})")
+            btn.setObjectName("ghost")
+            btn.setFixedHeight(24)
+            btn.setStyleSheet(btn.styleSheet() + "font-size: 9px; padding: 2px 6px;")
+            btn.clicked.connect(lambda _, v=val: (self._temp_slider.setValue(v)))
+            preset_row.addWidget(btn)
+        preset_row.addStretch()
+        lay.addLayout(preset_row)
+
+        lay.addStretch()
+        return self._scroll_wrap(w)
+
+    def _apply_tone_card_style(self, card: QPushButton, active: bool):
+        if active:
+            card.setStyleSheet(f"""
+                QPushButton {{
+                    background: {_ACCENT}22; border: 1.5px solid {_ACCENT};
+                    border-radius: 8px; text-align: left;
+                }}
+            """)
+        else:
+            card.setStyleSheet(f"""
+                QPushButton {{
+                    background: {_SURFACE}; border: 1px solid {_BORDER};
+                    border-radius: 8px; text-align: left;
+                }}
+                QPushButton:hover {{ border-color: {_ACCENT}88; background: {_RAISED}; }}
+            """)
+
+    def _on_tone_selected(self, selected_key: str):
+        for key, card in self._tone_cards.items():
+            card.setChecked(key == selected_key)
+            self._apply_tone_card_style(card, key == selected_key)
+
     def _page_notifications(self) -> QWidget:
         w = QWidget()
         lay = QVBoxLayout(w)
@@ -719,17 +1013,47 @@ class SettingsPanel(QWidget):
         lay.addStretch()
         return self._scroll_wrap(w)
 
+    def _load_personal_info(self):
+        try:
+            from brain import soul_builder
+            self._personal_edit.setPlainText(soul_builder.get_personal_info())
+        except Exception:
+            pass
+
+    def _import_personal_info(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import Personal Info",
+            os.path.expanduser("~"),
+            "Markdown & Text Files (*.md *.txt);;All Files (*)"
+        )
+        if path:
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    self._personal_edit.setPlainText(f.read())
+                self._status_lbl.setText("File imported — click Save to apply")
+            except Exception as e:
+                self._status_lbl.setText(f"Import failed: {e}")
+
+    def _save_personal_info(self):
+        try:
+            from brain import soul_builder
+            soul_builder.save_personal_info(self._personal_edit.toPlainText().strip())
+            self._status_lbl.setText("✓ Personal info saved")
+        except Exception as e:
+            self._status_lbl.setText(f"Save failed: {e}")
+
     # ── Actions ────────────────────────────────────────────────────
 
     def _switch_page(self, idx: int):
-        titles = ["Identity", "Soul", "Character", "Skills", "Azure AI", "Vault", "Notifications"]
+        titles = ["Identity", "Soul", "Character", "Skills", "Azure AI", "Vault", "Notifications", "Personal Info", "Tone & Style"]
         for i, btn in enumerate(self._nav_btns):
             btn.setChecked(i == idx)
         self._stack.setCurrentIndex(idx)
         self._page_title.setText(titles[idx])
-        # Refresh soul viewer whenever the Soul tab is opened
         if idx == 1:
             QTimer.singleShot(50, self._refresh_soul_view)
+        if idx == 7:
+            QTimer.singleShot(50, self._load_personal_info)
 
     def _browse_vault(self):
         path = QFileDialog.getExistingDirectory(self, "Select Obsidian Vault Folder",
@@ -761,11 +1085,24 @@ class SettingsPanel(QWidget):
         self._draft["notifications"]["reminder_cooldown_seconds"] = self._reminder_cooldown.value()
         self._draft["notifications"]["display_duration_seconds"] = self._display_duration.value()
         self._draft["awareness"]["scan_interval_seconds"] = self._scan_interval.value()
+        if hasattr(self, "_tone_cards"):
+            selected = next((k for k, c in self._tone_cards.items() if c.isChecked()), "default")
+            if "tone" not in self._draft:
+                self._draft["tone"] = {}
+            self._draft["tone"]["style"]        = selected
+            self._draft["tone"]["blend_style"]  = self._blend_combo.currentData() or ""
+            self._draft["tone"]["blend_weight"] = self._blend_slider.value()
+            self._draft["tone"]["temperature"]  = self._temp_slider.value()
 
     def _save(self):
         self._collect()
         config.save(self._draft)
         self._cfg = copy.deepcopy(self._draft)
+        try:
+            from brain import azure_client
+            azure_client.update_tone(self._draft.get("tone", {}))
+        except Exception:
+            pass
         self._status_lbl.setText("✓ Saved — restart to apply all changes")
         self.saved.emit(self._draft)
 

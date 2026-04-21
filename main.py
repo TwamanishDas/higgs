@@ -212,6 +212,7 @@ def _init_azure(cfg: dict):
         api_version = az.get("api_version", "2024-12-01-preview"),
         identity    = cfg.get("identity", {}),
         soul        = cfg.get("soul", {}),
+        tone        = cfg.get("tone", {}),
     )
 
 
